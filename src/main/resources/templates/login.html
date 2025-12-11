@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Please sign in</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600&display=swap');
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f6f8fa;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding-top: 1cm;
+            backdrop-filter: blur(3px);
+        }
+
+        .login-header {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 2mm;
+            color: #24292e;
+            text-align: left;
+            width: 300px;
+            font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+            position: relative;
+            width: 300px;
+        }
+
+        .form-group label {
+            position: absolute;
+            left: 12px;
+            top: 12px;
+            font-size: 14px;
+            color: #6a737d;
+            pointer-events: none;
+            transition: all 0.2s ease;
+            font-weight: 400;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 21px 12px 5px 12px;
+            border: 1px solid #e1e4e8;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+            background-color: #fafbfc;
+            height: 44px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        input[type="email"]:focus + label,
+        input[type="password"]:focus + label,
+        input[type="email"]:not(:placeholder-shown) + label,
+        input[type="password"]:not(:placeholder-shown) + label {
+            top: 6px;
+            font-size: 11px;
+            color: #0366d6;
+        }
+
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            border-color: #4a90e2;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3);
+            background-color: #ffffff;
+        }
+
+        .login-button {
+            width: 300px;
+            padding: 11px 16px;
+            background-color: #5c9ce6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 7.5px;
+            height: 42px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .login-button:hover {
+            background-color: #4a90e2;
+        }
+
+        .login-button:active {
+            background-color: #357ae8;
+        }
+
+        .error-message {
+            color: #cb2431;
+            font-size: 12px;
+            margin-bottom: 15px;
+            padding: 8px;
+            background-color: #ffebe9;
+            border: 1px solid #ffcecb;
+            border-radius: 4px;
+            text-align: center;
+            font-family: 'Segoe UI', sans-serif;
+            width: 300px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-header">Please sign in</div>
+
+
+<div th:if="${param.error}" class="error-message">
+    Invalid email or password
+</div>
+
+
+<form method="post" th:action="@{/login}">
+    <div class="form-group">
+        <input type="email" id="email" name="email" required placeholder=" ">
+        <label for="email">Email address</label>
+    </div>
+
+    <div class="form-group">
+        <input type="password" id="password" name="password" required placeholder=" ">
+        <label for="password">Password</label>
+    </div>
+
+    <button type="submit" class="login-button">Sign in</button>
+</form>
+</body>
+</html>

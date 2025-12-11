@@ -1,0 +1,681 @@
+
+
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: block;
+            min-height: 100vh;
+        }
+
+
+        .top-bar {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logout-link {
+            color: #999;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            background: none;
+            border: none;
+            padding: 0;
+            font-family: inherit;
+            font-size: inherit;
+        }
+
+        .logout-link:hover {
+            color: #ccc;
+        }
+
+        .sidebar {
+            width: 240px;
+            background-color: #f8f9fa;
+            height: calc(100vh - 40px);
+            position: fixed;
+            left: 0;
+            top: 40px;
+            padding: 20px 0;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            z-index: 999;
+            overflow-y: auto;
+        }
+
+        .sidebar-item {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .sidebar-item.active {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .sidebar-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .sidebar-item.active:hover {
+            background-color: #5a6fd8;
+        }
+
+        .main-content {
+            margin-left: 240px;
+            margin-top: 40px;
+            padding: 20px;
+            width: calc(100% - 240px);
+            min-height: calc(100vh - 40px);
+            position: relative;
+        }
+
+        .page-title {
+            font-size: 30px;
+            font-weight: 300;
+            margin: 10px 0 30px 0;
+            color: #000;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .nav-button-blue {
+            padding: 10px 20px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #007bff;
+            display: inline-block;
+        }
+
+        .nav-button-blue:hover {
+            background: #f8f9fa;
+            color: #0056b3;
+        }
+
+        .nav-button-gray {
+            padding: 10px 20px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #6c757d;
+            display: inline-block;
+        }
+
+        .nav-button-gray:hover {
+            background: #f8f9fa;
+            color: #545b62;
+        }
+
+
+        .users-table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .users-table th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+            color: #333;
+        }
+
+        .users-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .users-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 3px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-edit {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-container {
+            background: white;
+            width: 9cm;
+            height: 14cm;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 10px 15px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f0f0f0;
+            flex-shrink: 0;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 3px;
+            font-weight: 600;
+            color: #333;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 4px 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            font-size: 12px;
+            box-sizing: border-box;
+            height: 25px;
+            text-align: left;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 1px rgba(0,123,255,0.25);
+        }
+
+
+        .role-container {
+            width: 100%;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            background-color: white;
+            height: 68px;
+            position: relative;
+        }
+
+        .role-option {
+            display: flex;
+            align-items: center;
+            height: 34px;
+            padding: 0 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            border-bottom: 1px solid #dee2e6;
+            text-align: left;
+        }
+
+        .role-option:last-child {
+            border-bottom: none;
+        }
+
+        .role-option:hover {
+            background-color: #e7f3ff;
+            color: #007bff;
+        }
+
+        .role-option.selected {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .role-controls {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 16px;
+            background-color: #f8f9fa;
+            border-left: 1px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 0;
+            pointer-events: none;
+        }
+
+        .scroll-arrow {
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+        }
+
+        .scroll-arrow.up {
+            border-bottom: 4px solid #adb5bd;
+        }
+
+        .scroll-arrow.down {
+            border-top: 4px solid #adb5bd;
+        }
+
+        .modal-footer {
+            padding: 10px 15px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            background-color: #f8f9fa;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            padding: 6px 15px;
+            font-size: 12px;
+            border-radius: 3px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid;
+        }
+
+        .btn-close {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            color: white;
+        }
+
+        .btn-close:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+
+        .btn-edit {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+
+        .hidden-input {
+            display: none;
+        }
+
+        .current-value {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            padding: 4px 8px;
+            font-size: 12px;
+            color: #495057;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <div class="user-info">
+        <span th:text="${currentUser.email}">admin@mail.ru</span>
+        <span> with roles: </span>
+        <span th:each="role, stat : ${currentUser.roles}">
+                <span th:text="${role}">ADMIN</span>
+                <span th:if="${!stat.last}"> </span>
+            </span>
+    </div>
+    <form action="/logout" method="POST" style="display: inline;">
+        <button type="submit" class="logout-link">Logout</button>
+    </form>
+</div>
+
+<div class="sidebar">
+    <a th:href="@{/admin}" class="sidebar-item">Admin</a>
+    <a th:href="@{/user}" class="sidebar-item">User</a>
+</div>
+
+<div class="main-content">
+    <h1 class="page-title">Admin panel</h1>
+
+    <div class="nav-buttons">
+        <a th:href="@{/admin}" class="nav-button-blue">Users table</a>
+        <a th:href="@{/admin/newUser}" class="nav-button-gray">New User</a>
+    </div>
+
+    <table class="users-table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Age</th>
+            <th>Email</th>
+            <th>Roles</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="user : ${userList}">
+            <td th:text="${user.id}">1</td>
+            <td th:text="${user.firstName}">John</td>
+            <td th:text="${user.lastName}">Doe</td>
+            <td th:text="${user.age}">25</td>
+            <td th:text="${user.email}">john@mail.ru</td>
+            <td>
+                        <span th:each="role, stat : ${user.roles}">
+                            <span th:text="${role}">USER</span>
+                            <span th:if="${!stat.last}">, </span>
+                        </span>
+            </td>
+            <td>
+                <div class="action-buttons">
+                    <a th:href="@{/admin/updateUserForm(id=${user.id})}" class="btn-sm btn-edit">Edit</a>
+                    <a th:href="@{/admin/delete(id=${user.id})}" class="btn-sm btn-delete">Delete</a>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+
+<div class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title">Edit User</h2>
+            <button type="button" class="close-btn" onclick="window.location.href='/admin'">
+                &times;
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <form th:action="@{/admin/editUser}" method="post" th:object="${userDao}" id="editForm">
+                <input type="hidden" th:field="*{id}"/>
+
+                <div class="form-group">
+                    <label class="form-label">ID</label>
+                    <div class="current-value" th:text="*{id}"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">First name</label>
+                    <input type="text"
+                           class="form-input"
+                           th:field="*{firstName}"
+                           required
+                           placeholder="">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Last name</label>
+                    <input type="text"
+                           class="form-input"
+                           th:field="*{lastName}"
+                           required
+                           placeholder="">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Age</label>
+                    <input type="number"
+                           class="form-input"
+                           th:field="*{age}"
+                           min="1"
+                           max="120"
+                           placeholder="">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email"
+                           class="form-input"
+                           th:field="*{email}"
+                           required
+                           placeholder="">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password"
+                           class="form-input"
+                           th:field="*{password}"
+                           placeholder="">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Role</label>
+                    <div class="role-container">
+                        <div class="role-option" data-value="admin">ADMIN</div>
+                        <div class="role-option" data-value="user">USER</div>
+                        <div class="role-controls">
+                            <div class="scroll-arrow up"></div>
+                            <div class="scroll-arrow down"></div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="roles" id="roleInput" th:field="*{roles}" required>
+                </div>
+            </form>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-close" onclick="window.location.href='/admin'">
+                Close
+            </button>
+            <button type="submit" class="btn btn-edit" form="editForm">
+                Edit
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleOptions = document.querySelectorAll('.role-option');
+        const roleInput = document.getElementById('roleInput');
+        const form = document.getElementById('editForm');
+
+
+        function initializeRoles() {
+            const currentRoles = roleInput.value ? roleInput.value.split(',') : [];
+            roleOptions.forEach(option => {
+                const roleValue = option.getAttribute('data-value');
+                if (currentRoles.includes(roleValue)) {
+                    option.classList.add('selected');
+                }
+            });
+        }
+
+
+        roleOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                const roleValue = this.getAttribute('data-value');
+                const isSelected = this.classList.contains('selected');
+
+                if (isSelected) {
+                    this.classList.remove('selected');
+                    // Remove role from input
+                    const currentRoles = roleInput.value ? roleInput.value.split(',') : [];
+                    const index = currentRoles.indexOf(roleValue);
+                    if (index > -1) {
+                        currentRoles.splice(index, 1);
+                        roleInput.value = currentRoles.join(',');
+                    }
+                } else {
+                    this.classList.add('selected');
+
+                    const currentRoles = roleInput.value ? roleInput.value.split(',') : [];
+                    if (!currentRoles.includes(roleValue)) {
+                        currentRoles.push(roleValue);
+                        roleInput.value = currentRoles.join(',');
+                    }
+                }
+            });
+        });
+
+
+        form.addEventListener('submit', function(event) {
+            const firstName = document.querySelector('input[th\\:field="*{firstName}"]').value.trim();
+            const lastName = document.querySelector('input[th\\:field="*{lastName}"]').value.trim();
+            const email = document.querySelector('input[th\\:field="*{email}"]').value.trim();
+            const selectedRoles = document.querySelectorAll('.role-option.selected');
+
+            if (!firstName || !lastName || !email) {
+                alert('Please fill in all required fields (First Name, Last Name, Email).');
+                event.preventDefault();
+                return;
+            }
+
+            if (selectedRoles.length === 0) {
+                alert('Please select at least one role.');
+                event.preventDefault();
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Please enter a valid email address.');
+                event.preventDefault();
+                return;
+            }
+        });
+
+
+        document.querySelector('.modal-overlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                window.location.href = '/admin';
+            }
+        });
+
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.location.href = '/admin';
+            }
+        });
+
+
+        initializeRoles();
+    });
+</script>
+</body>
+</html>
+
+
+
+
