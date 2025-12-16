@@ -1,15 +1,41 @@
+
 // main.js
 class UserManagement {
     constructor() {
         this.baseUrl = window.location.origin;
         this.currentUser = null;
+        this.csrfToken = null;
         this.init();
     }
 
     init() {
+        this.loadCsrfToken();
         this.loadCurrentUser();
         this.loadUsersTable();
         this.setupEventListeners();
+        this.setupLogoutButton();
+    }
+
+    // Загрузка CSRF токена
+    loadCsrfToken() {
+        // Ищем CSRF токен в разных местах
+        const csrfMeta = document.querySelector('meta[name="_csrf"]');
+        const csrfInput = document.querySelector('input[name="_csrf"]');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+
+        if (csrfMeta) {
+            this.csrfToken = csrfMeta.content;
+            console.log('CSRF token loaded from meta tag');
+        } else if (csrfInput) {
+            this.csrfToken = csrfInput.value;
+            console.log('CSRF token loaded from input');
+        }
+
+        if (this.csrfToken) {
+            console.log('CSRF token:', this.csrfToken.substring(0, 10) + '...');
+        } else {
+            console.warn('CSRF token not found');
+        }
     }
 
     // Загрузка текущего пользователя
@@ -59,6 +85,8 @@ class UserManagement {
     // Рендер таблицы пользователей
     renderUsersTable(users) {
         const tbody = document.getElementById('usersTableBody');
+        if (!tbody) return;
+
         tbody.innerHTML = '';
 
         users.forEach(user => {
@@ -165,7 +193,8 @@ class UserManagement {
 
         try {
             const response = await fetch(`${this.baseUrl}/api/users/${userId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: this.getHeaders()
             });
 
             if (response.ok) {
@@ -184,30 +213,100 @@ class UserManagement {
     // Настройка обработчиков событий
     setupEventListeners() {
         // Обработчик формы создания пользователя
-        document.getElementById('createUserForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.createUser();
-        });
+        const createForm = document.getElementById('createUserForm');
+        if (createForm) {
+            createForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.createUser();
+            });
+        }
 
         // Обработчик формы редактирования пользователя
-        document.getElementById('editUserForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.updateUser();
-        });
+        const editForm = document.getElementById('editUserForm');
+        if (editForm) {
+            editForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.updateUser();
+            });
+        }
 
         // Обработчик кнопки создания пользователя
-        document.getElementById('createUserBtn').addEventListener('click', () => {
-            this.openCreateModal();
-        });
+        const createBtn = document.getElementById('createUserBtn');
+        if (createBtn) {
+            createBtn.addEventListener('click', () => {
+                this.openCreateModal();
+            });
+        }
 
         // Обработчики модальных окон
         $('#createUserModal').on('hidden.bs.modal', () => {
-            document.getElementById('createUserForm').reset();
+            const form = document.getElementById('createUserForm');
+            if (form) form.reset();
         });
 
         $('#editUserModal').on('hidden.bs.modal', () => {
-            document.getElementById('editUserForm').reset();
+            const form = document.getElementById('editUserForm');
+            if (form) form.reset();
         });
+    }
+
+    // Настройка кнопки logout
+    setupLogoutButton() {
+        const logoutForms = document.querySelectorAll('form[action*="/logout"]');
+
+        logoutForms.forEach(form => {
+            // Убираем стандартное поведение формы
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.performLogout(form);
+            });
+        });
+    }
+
+    // Выполнение logout через Fetch API
+    async performLogout(formElement) {
+        try {
+            // Собираем данные формы
+            const formData = new FormData(formElement);
+
+            // Добавляем CSRF токен если есть
+            if (this.csrfToken) {
+                formData.append('_csrf', this.csrfToken);
+            }
+
+            // Отправляем запрос
+            const response = await fetch('/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams(formData).toString()
+            });
+
+            if (response.ok || response.redirected) {
+                // Редирект на страницу логина
+                window.location.href = '/login?logout';
+            } else {
+                this.showError('Ошибка при выходе из системы');
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+            this.showError('Ошибка при выходе из системы');
+        }
+    }
+
+    // Получение заголовков для запросов
+    getHeaders() {
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+
+        // Добавляем CSRF токен если есть
+        if (this.csrfToken) {
+            headers['X-CSRF-TOKEN'] = this.csrfToken;
+        }
+
+        return headers;
     }
 
     // Открытие модального окна создания
@@ -222,9 +321,7 @@ class UserManagement {
         try {
             const response = await fetch(`${this.baseUrl}/api/users`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: this.getHeaders(),
                 body: JSON.stringify(formData)
             });
 
@@ -251,9 +348,7 @@ class UserManagement {
         try {
             const response = await fetch(`${this.baseUrl}/api/users/${userId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: this.getHeaders(),
                 body: JSON.stringify(formData)
             });
 
@@ -274,6 +369,8 @@ class UserManagement {
     // Получение данных из формы
     getFormData(formId) {
         const form = document.getElementById(formId);
+        if (!form) return {};
+
         const formData = new FormData(form);
         const data = {};
 
@@ -345,5 +442,12 @@ class UserManagement {
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing UserManagement...');
     window.userManagement = new UserManagement();
+
+    // Если мы на странице admin, загружаем таблицу
+    if (window.location.pathname.includes('/admin')) {
+        console.log('Admin page detected, loading users table...');
+        window.userManagement.loadUsersTable();
+    }
 });

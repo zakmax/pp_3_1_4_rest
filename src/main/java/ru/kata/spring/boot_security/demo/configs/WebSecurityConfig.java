@@ -37,14 +37,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-
-
                 .authorizeRequests()
-                // РАЗРЕШАЕМ ВСЕ API ЗАПРОСЫ БЕЗ АУТЕНТИФИКАЦИИ
-                .antMatchers("/api/**").permitAll()
-                // Остальные правила для веб-интерфейса
                 .antMatchers("/admin/**").hasAuthority("admin")
                 .antMatchers("/user/**").authenticated()
+                .antMatchers("/api/**").permitAll() // REST API доступен без аутентификации
                 .antMatchers("/login", "/css/**", "/js/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
@@ -56,11 +52,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .permitAll()
                 .and()
                 .logout()
-                .logoutSuccessUrl("/login?logout")
+                .logoutUrl("/logout") // URL для выхода
+                .logoutSuccessUrl("/login?logout") // Редирект после выхода
+                .invalidateHttpSession(true) // Инвалидация сессии
+                .deleteCookies("JSESSIONID") // Удаление cookies
                 .permitAll()
                 .and()
-                .csrf().disable(); // Отключаем CSRF
-       // .cors(); // ← ДОБАВЬТЕ ЭТУ СТРОКУ для CORS поддержки
+                .csrf().disable();
     }
     @Bean
     public PasswordEncoder passwordEncoder() {
